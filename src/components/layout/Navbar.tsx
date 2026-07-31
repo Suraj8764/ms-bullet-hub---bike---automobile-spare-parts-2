@@ -165,8 +165,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateTab, onNavigateAdmin, 
               {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
 
-            {/* Admin Avatar & Menu (Shown ONLY after login) */}
-            {isAdminLoggedIn && (
+            {/* Admin Avatar & Menu (Shown after login) / Admin Login button (When logged out) */}
+            {!isAdminLoggedIn ? (
+              <button
+                onClick={() => onNavigateTab('admin')}
+                className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-all cursor-pointer flex items-center gap-1"
+                title="Admin Portal Login"
+              >
+                <ShieldCheck className="w-3 h-3 text-amber-400" />
+                <span>Admin Login</span>
+              </button>
+            ) : (
               <div className="relative">
                 <button
                   onClick={() => setIsAdminMenuOpen(!isAdminMenuOpen)}
