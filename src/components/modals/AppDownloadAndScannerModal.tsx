@@ -37,13 +37,20 @@ export const AppDownloadAndScannerModal: React.FC = () => {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [scannedResult, setScannedResult] = useState<string | null>(null);
 
-  const currentAppUrl = typeof window !== 'undefined' ? window.location.href : 'https://msbullethub.in';
+  const defaultUrl = typeof window !== 'undefined' ? window.location.origin : 'https://msbullethub.in';
+  const [customAppUrl, setCustomAppUrl] = useState<string>(defaultUrl);
 
-  // Generate real QR Code on mount or open
   useEffect(() => {
-    if (isAppDownloadModalOpen) {
+    if (typeof window !== 'undefined' && window.location.origin) {
+      setCustomAppUrl(window.location.origin);
+    }
+  }, []);
+
+  // Generate real QR Code on mount, open, or URL change
+  useEffect(() => {
+    if (isAppDownloadModalOpen && customAppUrl) {
       QRCode.toDataURL(
-        currentAppUrl,
+        customAppUrl,
         {
           width: 320,
           margin: 2,
@@ -59,7 +66,7 @@ export const AppDownloadAndScannerModal: React.FC = () => {
         }
       );
     }
-  }, [isAppDownloadModalOpen, currentAppUrl]);
+  }, [isAppDownloadModalOpen, customAppUrl]);
 
   // Handle Camera Start
   const startCamera = async () => {
@@ -105,7 +112,7 @@ export const AppDownloadAndScannerModal: React.FC = () => {
   if (!isAppDownloadModalOpen) return null;
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(currentAppUrl);
+    navigator.clipboard.writeText(customAppUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
@@ -188,6 +195,52 @@ export const AppDownloadAndScannerModal: React.FC = () => {
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
           {activeTab === 'download' && (
             <div className="space-y-6 text-center">
+              {/* Target App URL for QR Scanner */}
+              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-left space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+                    <Smartphone className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Target URL inside QR Code:</span>
+                  </label>
+                  <span className="text-[10px] text-amber-400 font-mono font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                    Live Sync
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={customAppUrl}
+                    onChange={(e) => setCustomAppUrl(e.target.value)}
+                    placeholder="https://msbullethub.in"
+                    className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500 font-mono shadow-inner"
+                  />
+                  <button
+                    onClick={() => setCustomAppUrl(typeof window !== 'undefined' ? window.location.origin : 'https://msbullethub.in')}
+                    title="Reset to current site domain"
+                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold rounded-xl text-[10px] uppercase tracking-wider shrink-0 border border-slate-700 transition-colors"
+                  >
+                    Reset
+                  </button>
+                </div>
+              </div>
+
+              {/* Vercel Login Warning notice if using Vercel Preview */}
+              {customAppUrl.includes('vercel.app') && (
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-left space-y-1.5 text-xs">
+                  <div className="flex items-center gap-2 text-amber-400 font-bold">
+                    <ExternalLink className="w-4 h-4 shrink-0" />
+                    <span>Mobile Asking for Vercel Login?</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    Vercel Preview links require account login by default. To allow mobile scanning without login:
+                  </p>
+                  <ul className="text-[11px] text-slate-300 list-disc list-inside space-y-0.5 font-mono">
+                    <li>Vercel Dashboard ➔ Settings ➔ Deployment Protection</li>
+                    <li>Set <strong>Vercel Authentication</strong> to <strong>Disabled</strong></li>
+                  </ul>
+                </div>
+              )}
+
               {/* QR Code Container */}
               <div className="p-5 rounded-3xl bg-white border-4 border-amber-500/40 inline-block shadow-2xl relative group mx-auto">
                 {qrDataUrl ? (
