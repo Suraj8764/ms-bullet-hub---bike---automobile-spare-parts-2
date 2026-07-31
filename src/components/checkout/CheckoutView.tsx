@@ -119,6 +119,10 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ onBack, onOrderCompl
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (cart.length === 0) {
+      alert('Your cart is empty. Add some spare parts before placing an order.');
+      return;
+    }
     if (!customerName || !mobile || !address || !pincode) {
       alert('Please fill out all required shipping fields.');
       return;
