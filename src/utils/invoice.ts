@@ -49,8 +49,8 @@ export function generateGSTInvoice(order: Order) {
   doc.text('Item Description', 18, y + 5.5);
   doc.text('OEM / HSN', 90, y + 5.5);
   doc.text('Qty', 130, y + 5.5);
-  doc.text('Rate (₹)', 148, y + 5.5);
-  doc.text('Amount (₹)', 172, y + 5.5);
+  doc.text('Rate (Rs.)', 148, y + 5.5);
+  doc.text('Amount (Rs.)', 172, y + 5.5);
 
   y += 12;
   doc.setFont('helvetica', 'normal');
@@ -64,8 +64,8 @@ export function generateGSTInvoice(order: Order) {
     doc.text(title, 18, y);
     doc.text(hsn, 90, y);
     doc.text(`${item.quantity}`, 132, y);
-    doc.text(`₹${rate}`, 148, y);
-    doc.text(`₹${itemTotal.toLocaleString('en-IN')}`, 172, y);
+    doc.text(`Rs. ${rate}`, 148, y);
+    doc.text(`Rs. ${itemTotal.toLocaleString('en-IN')}`, 172, y);
 
     y += 8;
   });
@@ -77,27 +77,27 @@ export function generateGSTInvoice(order: Order) {
 
   doc.setFont('helvetica', 'normal');
   doc.text('Subtotal:', 130, y);
-  doc.text(`₹${order.subtotal.toLocaleString('en-IN')}`, 172, y);
+  doc.text(`Rs. ${order.subtotal.toLocaleString('en-IN')}`, 172, y);
   
   if (order.discount > 0) {
     y += 6;
     doc.text(`Discount (${order.couponCode || 'Promo'}):`, 130, y);
-    doc.text(`- ₹${order.discount.toLocaleString('en-IN')}`, 172, y);
+    doc.text(`- Rs. ${order.discount.toLocaleString('en-IN')}`, 172, y);
   }
 
   y += 6;
   doc.text('GST (Estimated 18%):', 130, y);
-  doc.text(`₹${order.gst.toLocaleString('en-IN')}`, 172, y);
+  doc.text(`Rs. ${order.gst.toLocaleString('en-IN')}`, 172, y);
 
   y += 6;
   doc.text('Delivery Charges:', 130, y);
-  doc.text(order.shippingFee === 0 ? 'FREE' : `₹${order.shippingFee}`, 172, y);
+  doc.text(order.shippingFee === 0 ? 'FREE' : `Rs. ${order.shippingFee}`, 172, y);
 
   y += 8;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.text('Grand Total:', 130, y);
-  doc.text(`₹${order.grandTotal.toLocaleString('en-IN')}`, 172, y);
+  doc.text(`Rs. ${order.grandTotal.toLocaleString('en-IN')}`, 172, y);
 
   // Footer Note
   y += 20;

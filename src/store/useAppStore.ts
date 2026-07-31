@@ -309,15 +309,13 @@ export const useAppStore = create<AppState>()(
         const currentVehicle = get().selectedVehicle;
         set((state) => {
           const existingIndex = state.cart.findIndex((item) => item.product.id === product.id);
-          let newCart = [...state.cart];
+          let newCart;
           if (existingIndex > -1) {
-            newCart[existingIndex].quantity += quantity;
+            newCart = state.cart.map((item, i) =>
+              i === existingIndex ? { ...item, quantity: item.quantity + quantity } : item
+            );
           } else {
-            newCart.push({
-              product,
-              quantity,
-              selectedVehicle: currentVehicle
-            });
+            newCart = [...state.cart, { product, quantity, selectedVehicle: currentVehicle }];
           }
           return { cart: newCart, isCartOpen: true };
         });
@@ -424,12 +422,7 @@ export const useAppStore = create<AppState>()(
         const state = get();
         const envPassword = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_ADMIN_MASTER_PASSWORD;
         const validPassword = state.adminPassword || envPassword || 'admin123';
-        if (
-          password === validPassword ||
-          (envPassword && password === envPassword) ||
-          password === 'admin123' ||
-          password === 'admin'
-        ) {
+        if (password === validPassword || (envPassword && password === envPassword)) {
           set({ isAdminLoggedIn: true });
           return true;
         }

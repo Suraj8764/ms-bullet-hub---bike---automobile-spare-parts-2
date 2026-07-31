@@ -1,16 +1,11 @@
 import express from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import { MongoClient, Db } from 'mongodb';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // MongoDB Atlas connection singleton
 let mongoClientInstance: MongoClient | null = null;
@@ -219,9 +214,9 @@ async function startServer() {
       .map(
         (item: any) => `
       <tr>
-        <td style="padding: 10px; border-bottom: 1px solid #334155; color: #f8fafc;">${item.name || item.productName || 'Spare Part'}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #334155; color: #f8fafc;">${item.product?.name || item.name || item.productName || 'Spare Part'}</td>
         <td style="padding: 10px; border-bottom: 1px solid #334155; color: #fbbf24; text-align: center;">${item.quantity || 1}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #334155; color: #f8fafc; text-align: right;">₹${(item.price || 0).toLocaleString('en-IN')}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #334155; color: #f8fafc; text-align: right;">₹${(item.product?.price ?? item.price ?? 0).toLocaleString('en-IN')}</td>
       </tr>`
       )
       .join('');
@@ -259,7 +254,7 @@ async function startServer() {
           <div class="order-info">
             <div style="margin-bottom: 6px;"><strong>Order ID:</strong> <span style="color: #f59e0b; font-family: monospace; font-size: 14px; font-weight: bold;">${order.orderNumber || order.id}</span></div>
             <div style="margin-bottom: 6px;"><strong>Customer Mobile:</strong> +91 ${order.mobile || 'N/A'}</div>
-            <div style="margin-bottom: 6px;"><strong>Payment Mode:</strong> ${order.paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Online / UPI Instant Payment'}</div>
+            <div style="margin-bottom: 6px;"><strong>Payment Mode:</strong> ${String(order.paymentMethod).toLowerCase() === 'cod' ? 'Cash on Delivery (COD)' : 'Online / UPI Instant Payment'}</div>
             <div><strong>Delivery Address:</strong> ${order.address || ''}, ${order.city || ''}, ${order.state || ''} - ${order.pincode || ''}</div>
           </div>
 
@@ -278,9 +273,9 @@ async function startServer() {
 
           <div class="summary">
             <div style="display: flex; justify-content: space-between;"><span>Items Subtotal:</span> <strong>₹${(order.subtotal || 0).toLocaleString('en-IN')}</strong></div>
-            <div style="display: flex; justify-content: space-between;"><span>GST (18% Incl.):</span> <strong>₹${(order.gstAmount || 0).toLocaleString('en-IN')}</strong></div>
-            <div style="display: flex; justify-content: space-between;"><span>Shipping Charge:</span> <strong style="color: #34d399;">${order.shippingCost === 0 ? 'FREE' : `₹${order.shippingCost}`}</strong></div>
-            ${order.discountAmount ? `<div style="display: flex; justify-content: space-between; color: #f59e0b;"><span>Promo Discount:</span> <strong>-₹${order.discountAmount}</strong></div>` : ''}
+            <div style="display: flex; justify-content: space-between;"><span>GST (18% Incl.):</span> <strong>₹${(order.gst ?? order.gstAmount ?? 0).toLocaleString('en-IN')}</strong></div>
+            <div style="display: flex; justify-content: space-between;"><span>Shipping Charge:</span> <strong style="color: #34d399;">${(order.shippingFee ?? order.shippingCost ?? 0) === 0 ? 'FREE' : `₹${order.shippingFee ?? order.shippingCost}`}</strong></div>
+            ${(order.discount ?? order.discountAmount) ? `<div style="display: flex; justify-content: space-between; color: #f59e0b;"><span>Promo Discount:</span> <strong>-₹${order.discount ?? order.discountAmount}</strong></div>` : ''}
             <div style="display: flex; justify-content: space-between; font-size: 16px; color: #f59e0b; font-weight: bold; border-top: 1px solid #334155; padding-top: 8px; margin-top: 8px;">
               <span>Total Amount Paid:</span>
               <span>₹${(order.grandTotal || 0).toLocaleString('en-IN')}</span>
@@ -450,7 +445,7 @@ Identify the exact mechanical/electrical issue for the bike, explain the cause i
       }
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-2.5-flash',
         contents
       });
 
@@ -477,6 +472,7 @@ Identify the exact mechanical/electrical issue for the bike, explain the cause i
 
   // Vite Middleware for development vs Static Server for Production
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa'
