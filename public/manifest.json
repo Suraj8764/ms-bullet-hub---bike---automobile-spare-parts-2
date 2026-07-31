@@ -1,23 +1,30 @@
 {
-  "name": "PS Garage Automobile Spare Parts",
-  "short_name": "PS Garage",
-  "description": "Enterprise Automobile Spare Parts eCommerce Platform",
+  "name": "MS BULLET HUB - Bike & Automobile Spare Parts",
+  "short_name": "MS BULLET HUB",
+  "description": "Shop 100% genuine motorcycle, Royal Enfield and automotive spare parts, OEM components, lubricants, brake pads, and accessories.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#111827",
+  "orientation": "portrait",
+  "background_color": "#0F172A",
   "theme_color": "#FF6B00",
   "icons": [
     {
-      "src": "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=192&auto=format&fit=crop&q=80",
+      "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=512&auto=format&fit=crop&q=80",
+      "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/maskable-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

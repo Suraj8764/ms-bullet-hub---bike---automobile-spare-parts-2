@@ -1,8 +1,13 @@
-const CACHE_NAME = 'ps-garage-v1';
+const CACHE_NAME = 'ms-bullet-hub-v1';
 const ASSETS = [
   '/',
   '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/maskable-icon-512.png',
+  '/apple-touch-icon.png',
+  '/favicon-32x32.png'
 ];
 
 self.addEventListener('install', (e) => {
