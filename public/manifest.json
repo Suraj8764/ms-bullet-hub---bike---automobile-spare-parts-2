@@ -1,12 +1,12 @@
 {
-  "name": "MS BULLET HUB - Bike & Automobile Spare Parts",
-  "short_name": "MS BULLET HUB",
-  "description": "Shop 100% genuine motorcycle, Royal Enfield and automotive spare parts, OEM components, lubricants, brake pads, and accessories.",
+  "name": "MSBulletHub",
+  "short_name": "MSBulletHub",
+  "description": "Enterprise Automobile & Bike Spare Parts eCommerce Platform",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0F172A",
-  "theme_color": "#FF6B00",
+  "background_color": "#FFFFFF",
+  "theme_color": "#111827",
   "icons": [
     {
       "src": "/icon-192.png",
