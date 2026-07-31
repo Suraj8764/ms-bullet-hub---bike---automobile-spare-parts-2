@@ -1,0 +1,6 @@
+{
+  "name": "MS BULLET HUB - Bike & Automobile Spare Parts",
+  "description": "Simple and easy-to-use Royal Enfield & bike spare parts shop with verified vehicle fitment, instant order placement, tracking, and AI diagnostic assistant.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
