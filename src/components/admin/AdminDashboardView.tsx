@@ -149,6 +149,31 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onExitAd
   const [activeTab, setActiveTab] = useState<AdminTab>(initialTab);
   const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
 
+  // Database Connection Status
+  const [dbStatus, setDbStatus] = useState<{ connected: boolean; database: string; message: string } | null>(null);
+  const [checkingDb, setCheckingDb] = useState(false);
+
+  const checkDatabaseStatus = async () => {
+    setCheckingDb(true);
+    try {
+      const res = await fetch('/api/db-status');
+      const data = await res.json();
+      setDbStatus(data);
+    } catch (err) {
+      setDbStatus({
+        connected: false,
+        database: 'Server Offline or Unreachable',
+        message: 'Failed to contact backend API server.'
+      });
+    } finally {
+      setCheckingDb(false);
+    }
+  };
+
+  useEffect(() => {
+    checkDatabaseStatus();
+  }, []);
+
   useEffect(() => {
     if (initialTab) {
       setActiveTab(initialTab);
@@ -741,6 +766,20 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onExitAd
               </div>
             )}
           </div>
+
+          {/* DB Status Badge */}
+          <button
+            onClick={checkDatabaseStatus}
+            disabled={checkingDb}
+            className={`hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${dbStatus?.connected
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                : 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
+              }`}
+            title="Click to re-check MongoDB connection"
+          >
+            <Database className={`w-3.5 h-3.5 ${checkingDb ? 'animate-spin' : ''}`} />
+            <span>{dbStatus?.connected ? 'MongoDB Connected' : 'DB: Local/In-Memory'}</span>
+          </button>
 
           {/* Quick Action Button */}
           <button
@@ -2341,6 +2380,63 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onExitAd
               <div className="pb-2 border-b border-slate-800">
                 <h2 className="text-xl font-black text-white">Store & System Settings</h2>
                 <p className="text-xs text-slate-400 mt-0.5">Store credentials, GSTIN, payment gateways, and admin password</p>
+              </div>
+
+              {/* MongoDB Connection & Diagnostics Status Card */}
+              <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                  <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                    <Database className="w-4 h-4 text-amber-400" /> MongoDB Atlas Database Diagnostics
+                  </h3>
+                  <button
+                    onClick={checkDatabaseStatus}
+                    disabled={checkingDb}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${checkingDb ? 'animate-spin' : ''}`} />
+                    <span>Test Connection</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className={`p-4 rounded-xl border ${dbStatus?.connected
+                      ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300'
+                      : 'bg-amber-950/20 border-amber-500/30 text-amber-300'
+                    }`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      {dbStatus?.connected ? (
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                      ) : (
+                        <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+                      )}
+                      <span className="font-extrabold text-sm">
+                        {dbStatus?.connected ? 'MongoDB Atlas Connected' : 'In-Memory / Local Mode Active'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-300 mt-1">
+                      {dbStatus?.message || 'Checking database status...'}
+                    </p>
+                    <div className="mt-3 text-[11px] font-mono bg-slate-950/60 p-2 rounded-lg border border-slate-800/80 text-slate-400">
+                      Database: <span className="text-amber-400 font-bold">{dbStatus?.database || 'msbullethub'}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                    <h4 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Managed Collections & Schemas
+                    </h4>
+                    <div className="grid grid-cols-2 gap-1.5 text-[11px] font-mono text-slate-400">
+                      <div className="flex items-center gap-1"><span className="text-amber-400 font-bold">●</span> products</div>
+                      <div className="flex items-center gap-1"><span className="text-amber-400 font-bold">●</span> orders</div>
+                      <div className="flex items-center gap-1"><span className="text-amber-400 font-bold">●</span> categories</div>
+                      <div className="flex items-center gap-1"><span className="text-amber-400 font-bold">●</span> brands</div>
+                      <div className="flex items-center gap-1"><span className="text-amber-400 font-bold">●</span> coupons</div>
+                      <div className="flex items-center gap-1"><span className="text-amber-400 font-bold">●</span> garages</div>
+                      <div className="flex items-center gap-1"><span className="text-amber-400 font-bold">●</span> enquiries</div>
+                      <div className="flex items-center gap-1"><span className="text-amber-400 font-bold">●</span> banners</div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Store Details Settings Form */}
