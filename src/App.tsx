@@ -7,12 +7,11 @@ import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { MobileBottomBar } from './components/layout/MobileBottomBar';
-import { PWAInstallBanner } from './components/layout/PWAInstallBanner';
 import { HomeView } from './components/home/HomeView';
 import { ProductCatalogView } from './components/shop/ProductCatalogView';
 import { CheckoutView } from './components/checkout/CheckoutView';
 import { OrderTrackingView } from './components/tracking/OrderTrackingView';
-import { AdminDashboardView } from './components/admin/AdminDashboardView';
+import { AdminDashboardView, AdminTab } from './components/admin/AdminDashboardView';
 
 import { VehicleSelectorModal } from './components/modals/VehicleSelectorModal';
 import { AIDoctorModal } from './components/modals/AIDoctorModal';
@@ -28,6 +27,7 @@ import { Product } from './types';
 export default function App() {
   const { darkMode } = useAppStore();
   const [activeTab, setActiveTab] = useState<string>('home');
+  const [adminSubTab, setAdminSubTab] = useState<AdminTab>('dashboard');
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [trackingOrderId, setTrackingOrderId] = useState<string>('');
 
@@ -44,6 +44,11 @@ export default function App() {
     setActiveTab('tracking');
   };
 
+  const handleNavigateAdmin = (subTab: AdminTab) => {
+    setAdminSubTab(subTab);
+    setActiveTab('admin');
+  };
+
   return (
     <div className="min-h-screen bg-[#07090e] text-slate-100 flex flex-col font-sans selection:bg-orange-500 selection:text-white relative overflow-x-hidden">
       {/* Dynamic ambient background mesh lighting */}
@@ -51,61 +56,62 @@ export default function App() {
       <div className="fixed bottom-10 right-10 w-[500px] h-[500px] bg-gradient-to-tl from-cyan-500/10 via-blue-600/5 to-transparent rounded-full blur-[140px] pointer-events-none -z-10" />
       <div className="fixed top-1/2 -left-20 w-[400px] h-[400px] bg-rose-500/5 rounded-full blur-[160px] pointer-events-none -z-10" />
 
-      {/* Chrome Extension / PWA Install Suggestion Banner */}
-      <PWAInstallBanner />
+      {activeTab === 'admin' ? (
+        /* Standalone Enterprise Admin Portal - Completely isolated from customer store */
+        <AdminDashboardView initialTab={adminSubTab} onExitAdmin={() => setActiveTab('home')} />
+      ) : (
+        /* Customer Store View */
+        <>
+          {/* Customer Store Navbar */}
+          <Navbar onNavigateTab={setActiveTab} onNavigateAdmin={handleNavigateAdmin} activeTab={activeTab} />
 
-      {/* Navbar */}
-      <Navbar onNavigateTab={setActiveTab} activeTab={activeTab} />
+          {/* Main Content Body */}
+          <main className="flex-1">
+            {activeTab === 'home' && (
+              <HomeView
+                onNavigateTab={setActiveTab}
+                onQuickView={(p) => setQuickViewProduct(p)}
+              />
+            )}
 
-      {/* Main Content Body */}
-      <main className="flex-1">
-        {activeTab === 'home' && (
-          <HomeView
-            onNavigateTab={setActiveTab}
-            onQuickView={(p) => setQuickViewProduct(p)}
+            {activeTab === 'catalog' && (
+              <ProductCatalogView
+                onQuickView={(p) => setQuickViewProduct(p)}
+              />
+            )}
+
+            {activeTab === 'checkout' && (
+              <CheckoutView
+                onBack={() => setActiveTab('catalog')}
+                onOrderComplete={handleOrderComplete}
+              />
+            )}
+
+            {activeTab === 'tracking' && (
+              <OrderTrackingView initialOrderId={trackingOrderId} />
+            )}
+          </main>
+
+          {/* Customer Store Footer */}
+          <Footer onNavigateTab={setActiveTab} />
+
+          {/* Fixed Customer Mobile Bottom Dock */}
+          <MobileBottomBar activeTab={activeTab} onNavigateTab={setActiveTab} />
+
+          {/* Customer Drawers & Modals */}
+          <VehicleSelectorModal />
+          <AIDoctorModal />
+          <CompareModal />
+          <GarageLocatorModal />
+          <VoiceAndBarcodeModals />
+          <AppDownloadAndScannerModal />
+          <CartDrawer onCheckout={() => setActiveTab('checkout')} />
+          <ProductDetailModal
+            product={quickViewProduct}
+            onClose={() => setQuickViewProduct(null)}
           />
-        )}
-
-        {activeTab === 'catalog' && (
-          <ProductCatalogView
-            onQuickView={(p) => setQuickViewProduct(p)}
-          />
-        )}
-
-        {activeTab === 'checkout' && (
-          <CheckoutView
-            onBack={() => setActiveTab('catalog')}
-            onOrderComplete={handleOrderComplete}
-          />
-        )}
-
-        {activeTab === 'tracking' && (
-          <OrderTrackingView initialOrderId={trackingOrderId} />
-        )}
-
-        {activeTab === 'admin' && (
-          <AdminDashboardView />
-        )}
-      </main>
-
-      {/* Footer */}
-      <Footer onNavigateTab={setActiveTab} />
-
-      {/* Fixed Mobile Bottom Dock */}
-      <MobileBottomBar activeTab={activeTab} onNavigateTab={setActiveTab} />
-
-      {/* Drawers & Modals */}
-      <VehicleSelectorModal />
-      <AIDoctorModal />
-      <CompareModal />
-      <GarageLocatorModal />
-      <VoiceAndBarcodeModals />
-      <AppDownloadAndScannerModal />
-      <CartDrawer onCheckout={() => setActiveTab('checkout')} />
-      <ProductDetailModal
-        product={quickViewProduct}
-        onClose={() => setQuickViewProduct(null)}
-      />
+        </>
+      )}
     </div>
   );
 }

@@ -16,17 +16,22 @@ import {
   QrCode,
   Mic,
   X,
-  ChevronDown
+  ChevronDown,
+  User,
+  Settings,
+  LogOut
 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { getTranslation } from '../../utils/i18n';
+import { AdminTab } from '../admin/AdminDashboardView';
 
 interface NavbarProps {
   onNavigateTab: (tab: string) => void;
+  onNavigateAdmin?: (subTab: AdminTab) => void;
   activeTab: string;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onNavigateTab, activeTab }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onNavigateTab, onNavigateAdmin, activeTab }) => {
   const {
     language,
     setLanguage,
@@ -49,10 +54,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateTab, activeTab }) => {
     setSearchQuery,
     setCategoryFilter,
     isAdminLoggedIn,
+    logoutAdmin,
     categories
   } = useAppStore();
 
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -89,9 +96,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateTab, activeTab }) => {
           <div className="flex items-center gap-3 sm:gap-4">
             <button
               onClick={() => onNavigateTab('tracking')}
-              className={`hover:text-amber-400 transition-colors font-semibold ${
-                activeTab === 'tracking' ? 'text-amber-400 font-extrabold' : ''
-              }`}
+              className={`hover:text-amber-400 transition-colors font-semibold ${activeTab === 'tracking' ? 'text-amber-400 font-extrabold' : ''
+                }`}
             >
               {getTranslation(language, 'trackOrder')}
             </button>
@@ -159,17 +165,95 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateTab, activeTab }) => {
               {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
 
-            {/* Admin Portal Toggle Button */}
-            <button
-              onClick={() => onNavigateTab('admin')}
-              className={`px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all ${
-                isAdminLoggedIn
-                  ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-400'
-                  : 'bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200'
-              }`}
-            >
-              {isAdminLoggedIn ? 'Admin Active' : getTranslation(language, 'adminLogin')}
-            </button>
+            {/* Admin Avatar & Menu (Shown ONLY after login) */}
+            {isAdminLoggedIn && (
+              <div className="relative">
+                <button
+                  onClick={() => setIsAdminMenuOpen(!isAdminMenuOpen)}
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 transition-all text-xs font-bold cursor-pointer group"
+                  title="Admin Account Menu"
+                >
+                  <div className="w-5 h-5 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center font-black text-[10px] shrink-0 shadow-sm">
+                    A
+                  </div>
+                  <span className="text-[10px] font-bold hidden sm:inline text-slate-200 group-hover:text-amber-400 transition-colors">
+                    Admin
+                  </span>
+                  <ChevronDown className={`w-3 h-3 text-emerald-400 transition-transform duration-200 ${isAdminMenuOpen ? 'rotate-180 text-amber-400' : ''}`} />
+                </button>
+
+                {isAdminMenuOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40 bg-transparent"
+                      onClick={() => setIsAdminMenuOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-1.5 w-52 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-100 text-xs">
+                      <div className="px-3.5 py-2 border-b border-slate-800 mb-1">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-slate-950 font-black text-xs">
+                            A
+                          </div>
+                          <div className="truncate">
+                            <p className="font-extrabold text-white text-xs truncate">Administrator</p>
+                            <p className="text-[10px] text-slate-400 truncate">admin@bulletspares.com</p>
+                          </div>
+                        </div>
+                        <span className="inline-block mt-1.5 px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md text-[9px] font-bold">
+                          ● Session Active
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setIsAdminMenuOpen(false);
+                          if (onNavigateAdmin) {
+                            onNavigateAdmin('dashboard');
+                          } else {
+                            onNavigateTab('admin');
+                          }
+                        }}
+                        className="w-full px-3.5 py-2 text-left text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-2.5 transition-colors cursor-pointer font-medium"
+                      >
+                        <User className="w-4 h-4 text-amber-400" />
+                        <span>Profile</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setIsAdminMenuOpen(false);
+                          if (onNavigateAdmin) {
+                            onNavigateAdmin('settings');
+                          } else {
+                            onNavigateTab('admin');
+                          }
+                        }}
+                        className="w-full px-3.5 py-2 text-left text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-2.5 transition-colors cursor-pointer font-medium"
+                      >
+                        <Settings className="w-4 h-4 text-amber-400" />
+                        <span>Settings</span>
+                      </button>
+
+                      <div className="border-t border-slate-800 my-1" />
+
+                      <button
+                        onClick={() => {
+                          setIsAdminMenuOpen(false);
+                          logoutAdmin();
+                          if (activeTab === 'admin') {
+                            onNavigateTab('home');
+                          }
+                        }}
+                        className="w-full px-3.5 py-2 text-left text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 flex items-center gap-2.5 transition-colors cursor-pointer font-semibold"
+                      >
+                        <LogOut className="w-4 h-4 text-rose-400" />
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -313,9 +397,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateTab, activeTab }) => {
               setCategoryFilter(null);
               onNavigateTab('catalog');
             }}
-            className={`hover:text-amber-400 transition-colors ${
-              activeTab === 'catalog' ? 'text-amber-400 font-black' : ''
-            }`}
+            className={`hover:text-amber-400 transition-colors ${activeTab === 'catalog' ? 'text-amber-400 font-black' : ''
+              }`}
           >
             {getTranslation(language, 'allCategories')}
           </button>

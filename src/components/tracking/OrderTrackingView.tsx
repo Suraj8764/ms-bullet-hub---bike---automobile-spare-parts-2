@@ -23,7 +23,7 @@ interface OrderTrackingViewProps {
 }
 
 export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({ initialOrderId = '' }) => {
-  const { orders } = useAppStore();
+  const { orders, cancelOrder, refundOrder } = useAppStore();
 
   const [activeTab, setActiveTab] = useState<'single' | 'mobile_otp'>('single');
 
@@ -104,11 +104,10 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({ initialOrd
       <div className="flex justify-center gap-2 mb-6">
         <button
           onClick={() => setActiveTab('single')}
-          className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
-            activeTab === 'single'
+          className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${activeTab === 'single'
               ? 'bg-amber-500 text-slate-950 border-amber-500 font-extrabold shadow-lg shadow-amber-500/20'
               : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
-          }`}
+            }`}
         >
           <Search className="w-4 h-4" />
           Track by Order ID + Mobile
@@ -116,11 +115,10 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({ initialOrd
 
         <button
           onClick={() => setActiveTab('mobile_otp')}
-          className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
-            activeTab === 'mobile_otp'
+          className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${activeTab === 'mobile_otp'
               ? 'bg-amber-500 text-slate-950 border-amber-500 font-extrabold shadow-lg shadow-amber-500/20'
               : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
-          }`}
+            }`}
         >
           <Smartphone className="w-4 h-4" />
           My Orders via Mobile OTP (Guest)
@@ -311,11 +309,10 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({ initialOrd
               {searchedOrder.trackingSteps.map((step, idx) => (
                 <div key={idx} className="flex md:flex-col items-center gap-3 relative z-10 flex-1">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-all ${
-                      step.completed
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-all ${step.completed
                         ? 'bg-orange-500 text-slate-950 ring-4 ring-orange-500/20'
                         : 'bg-slate-950 text-slate-500 border border-slate-800'
-                    }`}
+                      }`}
                   >
                     {step.completed ? <CheckCircle2 className="w-5 h-5" /> : idx + 1}
                   </div>
@@ -347,6 +344,96 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({ initialOrd
               ))}
             </div>
           </div>
+
+          {/* Order Cancellation & Refund Banner / Controls */}
+          {searchedOrder.orderStatus === 'Cancelled' ? (
+            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <p className="font-bold text-sm text-rose-400">Order #{searchedOrder.orderNumber} is Cancelled</p>
+                <p className="text-[11px] text-slate-300 mt-0.5">
+                  {searchedOrder.paymentStatus === 'Refunded'
+                    ? `✓ Full refund of ₹${searchedOrder.grandTotal.toLocaleString('en-IN')} has been processed back to your payment account.`
+                    : `Refund of ₹${searchedOrder.grandTotal.toLocaleString('en-IN')} is being processed within 24 hours.`}
+                </p>
+              </div>
+              {searchedOrder.paymentStatus !== 'Refunded' && (
+                <button
+                  onClick={() => {
+                    if (confirm(`Request instant refund for order #${searchedOrder.orderNumber}? Amount: ₹${searchedOrder.grandTotal}`)) {
+                      refundOrder(searchedOrder.id);
+                      setSearchedOrder({
+                        ...searchedOrder,
+                        orderStatus: 'Cancelled',
+                        paymentStatus: 'Refunded',
+                        trackingSteps: [
+                          ...searchedOrder.trackingSteps,
+                          { status: 'Refund Processed', date: new Date().toLocaleString('en-IN'), completed: true }
+                        ]
+                      });
+                      alert(`Refund of ₹${searchedOrder.grandTotal} processed successfully!`);
+                    }
+                  }}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider shrink-0 transition-colors shadow-lg"
+                >
+                  Request Instant Refund
+                </button>
+              )}
+            </div>
+          ) : (
+            searchedOrder.orderStatus !== 'Delivered' && (
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                  <p className="font-bold text-slate-200">Need to cancel or request a refund for this order?</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Orders can be cancelled anytime before dispatch with instant 100% money-back refund guarantee.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => {
+                      if (confirm(`Are you sure you want to cancel order #${searchedOrder.orderNumber}? Your items will be unreserved.`)) {
+                        cancelOrder(searchedOrder.id);
+                        setSearchedOrder({
+                          ...searchedOrder,
+                          orderStatus: 'Cancelled',
+                          paymentStatus: searchedOrder.paymentStatus === 'Paid' ? 'Refund Pending' : 'Cancelled',
+                          trackingSteps: [
+                            ...searchedOrder.trackingSteps,
+                            { status: 'Cancelled', date: new Date().toLocaleString('en-IN'), completed: true }
+                          ]
+                        });
+                        alert(`Order #${searchedOrder.orderNumber} has been cancelled.`);
+                      }
+                    }}
+                    className="px-3.5 py-2 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 font-bold rounded-xl transition-all cursor-pointer"
+                  >
+                    Cancel Order
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (confirm(`Request refund for order #${searchedOrder.orderNumber}? Amount: ₹${searchedOrder.grandTotal}`)) {
+                        refundOrder(searchedOrder.id);
+                        setSearchedOrder({
+                          ...searchedOrder,
+                          orderStatus: 'Cancelled',
+                          paymentStatus: 'Refunded',
+                          trackingSteps: [
+                            ...searchedOrder.trackingSteps,
+                            { status: 'Refund Processed', date: new Date().toLocaleString('en-IN'), completed: true }
+                          ]
+                        });
+                        alert(`Refund of ₹${searchedOrder.grandTotal} processed successfully!`);
+                      }
+                    }}
+                    className="px-3.5 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold rounded-xl transition-all cursor-pointer"
+                  >
+                    Request Refund
+                  </button>
+                </div>
+              </div>
+            )
+          )}
 
           {/* Action Buttons */}
           <div className="pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4">

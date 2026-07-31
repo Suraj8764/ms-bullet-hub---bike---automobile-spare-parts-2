@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import { MongoClient, Db } from 'mongodb';
@@ -7,6 +8,9 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // MongoDB Atlas connection singleton
 let mongoClientInstance: MongoClient | null = null;
@@ -405,6 +409,50 @@ async function startServer() {
     const ord = backendOrders.find((o) => o.id === orderId || o.orderNumber === orderId);
     if (ord) ord.orderStatus = status;
     res.json({ success: true, status });
+  });
+
+  app.post('/api/orders/:id/cancel', async (req, res) => {
+    const orderId = sanitizeString(req.params.id);
+    const db = await getMongoDb();
+    if (db) {
+      try {
+        await db.collection('orders').updateOne(
+          { $or: [{ id: orderId }, { orderNumber: orderId }] },
+          { $set: { orderStatus: 'Cancelled' } }
+        );
+      } catch (e) {
+        console.error('Error cancelling order in MongoDB:', e);
+      }
+    }
+    const ord = backendOrders.find((o) => o.id === orderId || o.orderNumber === orderId);
+    if (ord) {
+      ord.orderStatus = 'Cancelled';
+      if (ord.paymentStatus === 'Paid') {
+        ord.paymentStatus = 'Refund Pending';
+      }
+    }
+    res.json({ success: true, message: `Order ${orderId} cancelled successfully`, order: ord });
+  });
+
+  app.post('/api/orders/:id/refund', async (req, res) => {
+    const orderId = sanitizeString(req.params.id);
+    const db = await getMongoDb();
+    if (db) {
+      try {
+        await db.collection('orders').updateOne(
+          { $or: [{ id: orderId }, { orderNumber: orderId }] },
+          { $set: { orderStatus: 'Cancelled', paymentStatus: 'Refunded' } }
+        );
+      } catch (e) {
+        console.error('Error processing refund in MongoDB:', e);
+      }
+    }
+    const ord = backendOrders.find((o) => o.id === orderId || o.orderNumber === orderId);
+    if (ord) {
+      ord.orderStatus = 'Cancelled';
+      ord.paymentStatus = 'Refunded';
+    }
+    res.json({ success: true, message: `Refund processed for order ${orderId}`, order: ord });
   });
 
   // AI Spare Part Assistant (Gemini API Integration)

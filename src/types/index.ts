@@ -75,13 +75,13 @@ export interface CartItem {
   selectedVehicle?: VehicleSelection | null;
 }
 
-export type OrderStatus = 'Confirmed' | 'Packed' | 'Shipped' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
+export type OrderStatus = 'Confirmed' | 'Packed' | 'Shipped' | 'Out for Delivery' | 'Delivered' | 'Cancelled' | 'Refund Processed';
 
 export interface OrderTrackingStep {
-  status: OrderStatus;
+  status: string;
   date: string;
   completed: boolean;
-  description: string;
+  description?: string;
   location?: string;
 }
 
@@ -104,7 +104,7 @@ export interface Order {
   shippingFee: number;
   grandTotal: number;
   paymentMethod: 'Razorpay' | 'UPI' | 'COD';
-  paymentStatus: 'Paid' | 'Pending' | 'Failed';
+  paymentStatus: 'Paid' | 'Pending' | 'Failed' | 'Refunded' | 'Refund Pending' | 'Cancelled';
   orderStatus: OrderStatus;
   createdAt: string;
   estimatedDelivery: string;
