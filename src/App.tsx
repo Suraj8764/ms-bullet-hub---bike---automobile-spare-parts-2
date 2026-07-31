@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { MobileBottomBar } from './components/layout/MobileBottomBar';
+import { PWAInstallBanner } from './components/layout/PWAInstallBanner';
 import { HomeView } from './components/home/HomeView';
 import { ProductCatalogView } from './components/shop/ProductCatalogView';
 import { CheckoutView } from './components/checkout/CheckoutView';
@@ -49,6 +50,9 @@ export default function App() {
       <div className="fixed top-0 left-1/3 w-[600px] h-[600px] bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-transparent rounded-full blur-[140px] pointer-events-none -z-10" />
       <div className="fixed bottom-10 right-10 w-[500px] h-[500px] bg-gradient-to-tl from-cyan-500/10 via-blue-600/5 to-transparent rounded-full blur-[140px] pointer-events-none -z-10" />
       <div className="fixed top-1/2 -left-20 w-[400px] h-[400px] bg-rose-500/5 rounded-full blur-[160px] pointer-events-none -z-10" />
+
+      {/* Chrome Extension / PWA Install Suggestion Banner */}
+      <PWAInstallBanner />
 
       {/* Navbar */}
       <Navbar onNavigateTab={setActiveTab} activeTab={activeTab} />

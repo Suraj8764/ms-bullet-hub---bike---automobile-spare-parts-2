@@ -18,15 +18,18 @@ import {
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { useAppStore } from '../../store/useAppStore';
+import { usePWAInstall } from '../../utils/usePWAInstall';
 
 export const AppDownloadAndScannerModal: React.FC = () => {
   const { isAppDownloadModalOpen, setAppDownloadModalOpen } = useAppStore();
+  const { hasNativePrompt, isStandalone, isIOS, triggerInstall } = usePWAInstall();
 
   const [activeTab, setActiveTab] = useState<'download' | 'camera_scanner'>('download');
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-  const [downloadCompleted, setDownloadCompleted] = useState(false);
+  const [installing, setInstalling] = useState(false);
+  const [installedCompleted, setInstalledCompleted] = useState(false);
+  const [showDirectGuide, setShowDirectGuide] = useState(false);
 
   // Camera Scanner State
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -107,26 +110,19 @@ export const AppDownloadAndScannerModal: React.FC = () => {
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const handleDownloadAPK = () => {
-    setDownloading(true);
-    setDownloadCompleted(false);
-
-    setTimeout(() => {
-      // Create a blob simulation for MS BULLET HUB Android APK installer package
-      const apkContent = `MS BULLET HUB Android App Manifest v2.4\nApp URL: ${currentAppUrl}\nPackage: com.msbullethub.app\nStatus: Official OEM Spare Parts Store Ready.`;
-      const blob = new Blob([apkContent], { type: 'application/vnd.android.package-archive' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'MS_BULLET_HUB_v2.4.apk';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      setDownloading(false);
-      setDownloadCompleted(true);
-    }, 1500);
+  const handleInstallApp = async () => {
+    setInstalling(true);
+    setInstalledCompleted(false);
+    if (hasNativePrompt) {
+      const accepted = await triggerInstall();
+      setInstalling(false);
+      if (accepted) {
+        setInstalledCompleted(true);
+      }
+    } else {
+      setInstalling(false);
+      setShowDirectGuide(true);
+    }
   };
 
   const simulateScanSuccess = () => {
@@ -223,24 +219,24 @@ export const AppDownloadAndScannerModal: React.FC = () => {
               {/* Action Buttons */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
-                  onClick={handleDownloadAPK}
-                  disabled={downloading}
+                  onClick={handleInstallApp}
+                  disabled={installing}
                   className="py-3 px-4 bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 hover:from-amber-400 hover:to-red-500 text-slate-950 font-black rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50"
                 >
-                  {downloading ? (
+                  {installing ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      Preparing APK...
+                      Opening Installer...
                     </>
-                  ) : downloadCompleted ? (
+                  ) : installedCompleted ? (
                     <>
                       <CheckCircle2 className="w-4 h-4 text-slate-950" />
-                      APK Downloaded!
+                      App Installed!
                     </>
                   ) : (
                     <>
                       <Download className="w-4 h-4" />
-                      Download Android APK (.apk)
+                      Install Official Web App
                     </>
                   )}
                 </button>
@@ -263,10 +259,34 @@ export const AppDownloadAndScannerModal: React.FC = () => {
                 </button>
               </div>
 
+              {showDirectGuide && (
+                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-left space-y-2 animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Smartphone className="w-4 h-4" />
+                      Installation Steps for Your Device
+                    </span>
+                  </div>
+                  {isIOS ? (
+                    <ol className="text-xs text-slate-300 space-y-1.5 list-decimal list-inside pl-1">
+                      <li>Tap the <strong>Share</strong> button in Safari toolbar.</li>
+                      <li>Scroll down and tap <strong>"Add to Home Screen"</strong>.</li>
+                      <li>Launch MS BULLET HUB directly from your home screen icon!</li>
+                    </ol>
+                  ) : (
+                    <ol className="text-xs text-slate-300 space-y-1.5 list-decimal list-inside pl-1">
+                      <li>Tap the <strong>3-dots menu (⋮)</strong> in top-right corner of Chrome.</li>
+                      <li>Select <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</li>
+                      <li>Launch MS BULLET HUB directly with fast offline caching!</li>
+                    </ol>
+                  )}
+                </div>
+              )}
+
               {/* PWA Direct Prompt note */}
               <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-center justify-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Works on all Android phones (Samsung, Xiaomi, Realme, Vivo) & Apple iPhones!</span>
+                <span>Works natively on all Android phones (Samsung, Xiaomi, Realme, Vivo) & Apple iPhones!</span>
               </div>
             </div>
           )}
